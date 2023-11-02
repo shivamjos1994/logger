@@ -1,16 +1,40 @@
 import logging
 import datetime
 
+from opentelemetry.sdk._logs import (
+    LoggerProvider,
+    LoggingHandler,
+    set_logger_provider,
+)
+#  to send logging related telemetry to Azure Monitor.
+from azure.monitor.opentelemetry.exporter import AzureMonitorLogExporter
+
+# collects log records in a buffer and exports them periodically or when the buffer is full.
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+
+# for creating and managing Logger instances. 
+logger_provider = LoggerProvider()
+set_logger_provider(logger_provider)
+
+exporter = AzureMonitorLogExporter()
+
+logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+
+# LoggingHandler class forwards log records from the logging module to the OpenTelemetry logger provider.
+handler = LoggingHandler()
+
 fmt = '%Y-%m-%d %H:%M:%S'
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
-formatter = logging.Formatter('%(levelname)s: %(name)s: %(message)s')
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
 
-logger.addHandler(stream_handler)
+# formatter = logging.Formatter('%(levelname)s: %(name)s: %(message)s')
+# stream_handler = logging.StreamHandler()
+# stream_handler.setFormatter(formatter)
+
+# attaching LoggingHandler to root logger.
+logger.addHandler(handler)
+logger.setLevel(logging.NOTSET)
 
 
 def calculate_result(operator):
